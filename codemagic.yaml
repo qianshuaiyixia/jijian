@@ -59,10 +59,13 @@ workflows:
     artifacts:
       - build/ios/iphoneos/jijian.ipa
 
-    publishing:
-      email:
-        recipients:
-          - 这里换成你的邮箱@example.com
-        notify:
-          success: true
-          failure: true
+    # 不配置邮件通知：构建完成后直接在 Codemagic 的 Artifacts 页面下载 IPA 即可。
+    # 想要邮件通知的话，把下面这段注释打开并换成你的邮箱：
+    #
+    # publishing:
+    #   email:
+    #     recipients:
+    #       - your@email.com
+    #     notify:
+    #       success: true
+    #       failure: true
