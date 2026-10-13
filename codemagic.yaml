@@ -1,0 +1,68 @@
+# ==========================================================
+#  极简日记 · Codemagic 构建配置
+# ==========================================================
+#  产出：**未签名 IPA**，供 AltStore / Sideloadly 用免费 Apple ID 侧载安装
+#  不需要 Apple Developer 会员、不需要证书、不需要描述文件
+#
+#  使用流程：
+#    1. 代码推到 GitHub -> Codemagic 自动构建
+#    2. 构建完成后下载 IPA 到本机
+#    3. AltStore / Sideloadly 签名并安装到 iPhone
+#
+#  注：免费 Apple ID 的签名由本机 AltServer 完成，CI 侧只负责产出二进制。
+# ==========================================================
+
+workflows:
+  ios-unsigned-ipa:
+    name: iOS 未签名 IPA（AltStore 侧载）
+
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+
+    cache:
+      cache_paths:
+        - $HOME/.pub-cache
+        - $HOME/Library/Caches/CocoaPods
+
+    scripts:
+      - name: 拉取依赖
+        script: |
+          flutter config --no-analytics
+          flutter packages pub get
+
+      - name: 构建未签名的 iOS App
+        script: |
+          flutter build ios --release --no-codesign
+
+      - name: 打包成 IPA
+        script: |
+          set -e
+          cd build/ios/iphoneos
+          rm -rf Payload
+          mkdir -p Payload
+          cp -R Runner.app Payload/
+          zip -qry "$CM_BUILD_DIR/build/ios/iphoneos/jijian.ipa" Payload
+          echo "IPA 已生成："
+          ls -lh "$CM_BUILD_DIR/build/ios/iphoneos/jijian.ipa"
+
+      - name: 输出构建信息
+        script: |
+          echo "Bundle ID: cn.local.jijian"
+          echo "构建号: $CM_BUILD_ID"
+          echo "提交: $(git rev-parse --short HEAD)"
+
+    artifacts:
+      - build/ios/iphoneos/jijian.ipa
+
+    publishing:
+      email:
+        recipients:
+          - 这里换成你的邮箱@example.com
+        notify:
+          success: true
+          failure: true
